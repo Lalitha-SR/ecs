@@ -1,0 +1,90 @@
+name: ECS CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPO: ecs-fargate
+  ECS_CLUSTER:fargate-example 
+  ECS_SERVICE: 
+
+jobs:
+  build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build image
+        run: |
+          docker build -t $ECR_REPO:latest .
+
+      - name: Save image
+        run: |
+          docker save $ECR_REPO:latest | gzip > image.tar.gz
+
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-image
+          path: image.tar.gz
+
+  push:
+    name: Push Image to ECR
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Download image artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-image
+
+      - name: Load Docker image
+        run: |
+          gunzip -c image.tar.gz | docker load
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::<ACCOUNT_ID>:role/github-actions-ecr-role
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Tag & Push image
+        run: |
+          docker tag $ECR_REPO:latest \
+          <ACCOUNT_ID>.dkr.ecr.${AWS_REGION}.amazonaws.com/$ECR_REPO:latest
+
+          docker push \
+          <ACCOUNT_ID>.dkr.ecr.${AWS_REGION}.amazonaws.com/$ECR_REPO:latest
+
+  deploy:
+    name: Redeploy ECS Service
+    runs-on: ubuntu-latest
+    needs: push
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::<ACCOUNT_ID>:role/github-actions-ecr-role
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Force new ECS deployment
+        run: |
+          aws ecs update-service \
+            --cluster $ECS_CLUSTER \
+            --service $ECS_SERVICE \
+            --force-new-deployment
