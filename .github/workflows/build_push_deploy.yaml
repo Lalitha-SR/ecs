@@ -56,7 +56,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::227224898353:role/dev-ecstaskexecution
+          role-to-assume: arn:aws:iam::227224898353:role/dev-ecs_fargate
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to ECR
@@ -79,7 +79,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::227224898353:role/dev-ecstaskexecution
+          role-to-assume: arn:aws:iam::227224898353:role/dev-ecs_fargate
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Force new ECS deployment
