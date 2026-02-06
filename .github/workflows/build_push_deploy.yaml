@@ -13,7 +13,7 @@ env:
   AWS_REGION: us-east-1
   ECR_REPO: ecs-fargate
   ECS_CLUSTER:fargate-example 
-  ECS_SERVICE: 
+  ECS_SERVICE: fargate-ecs-service
 
 jobs:
   build:
