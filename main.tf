@@ -7,24 +7,28 @@ module "ecr" {
   source          = "./modules/ecr"
   repository_name = var.ecr_repo_name
 }
-
-
 module "vpc" {
   source = "./modules/vpc"
 
-  cidr         = var.vpc_cidr
-  public_cidr  = var.public_cidr
-  private_cidr = var.private_cidr
-  az           = var.az
-  vpc_name     = "fargate-vpc"
-}
+  cidr           = var.vpc_cidr
 
+  public_cidr_1  = var.public_cidr_1
+  public_cidr_2  = var.public_cidr_2
+
+  private_cidr_1 = var.private_cidr_1
+  private_cidr_2 = var.private_cidr_2
+
+  az_1           = var.az_1
+  az_2           = var.az_2
+
+  vpc_name       = "fargate-vpc"
+}
 
 module "alb" {
   source = "./modules/alb"
 
   vpc_id            = module.vpc.vpc_id
-  public_subnet_ids = [module.vpc.public_subnet_id]
+  public_subnet_ids = module.vpc.public_subnet_ids
   container_port    = var.container_port
   alb_name          = var.cluster_name
 }
@@ -49,7 +53,7 @@ module "ecs_fargate_task" {
 
   # REQUIRED NETWORK + ALB WIRING
   target_group_arn  = module.alb.target_group_arn
-  subnet_ids        = [module.vpc.private_subnet_id]
+  subnet_ids = module.vpc.private_subnet_ids
   security_group_id = module.alb.ecs_security_group_id
 
   region = var.region

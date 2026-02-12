@@ -9,8 +9,13 @@ variable "execution_role_arn" {}
 variable "task_role_arn" {}
 
 variable "ecr_repo_name" {}
-
 variable "vpc_cidr" {}
-variable "public_cidr" {}
-variable "private_cidr" {}
-variable "az" {}
+
+variable "public_cidr_1" {}
+variable "public_cidr_2" {}
+
+variable "private_cidr_1" {}
+variable "private_cidr_2" {}
+
+variable "az_1" {}
+variable "az_2" {}
